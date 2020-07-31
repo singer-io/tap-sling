@@ -17,6 +17,18 @@
 			},
 			"approved_minutes": {
 				"type": ["null", "integer"]
+			},
+			"pending": {
+				"type": ["null", "integer"]
+			},
+			"pending_minutes": {
+				"type": ["null", "integer"]
+			},
+			"unpaid": {
+				"type": ["null", "integer"]
+			},
+			"unpaid_minutes": {
+				"type": ["null", "integer"]
 			}
 		}
 }

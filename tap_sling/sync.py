@@ -99,7 +99,66 @@ def sync_leave_types(config, state):
 
 
 def sync_leaves(config, state):
-    return
+    stream_id = 'leaves'
+    api_key = config['api_key']
+    sc = SlingClient(api_key)
+
+    start_date = strptime(
+        state['bookmarks'].get(stream_id, {}).get('start_date', config['start_date'])
+    ).date()
+    end_date = (  # yesterday
+        datetime.datetime.utcnow() - datetime.timedelta(days=1)
+    ).date()
+    if start_date > end_date:
+        LOGGER.info('Start date %s after yesterday; will try again later.' % start_date)
+        return state  # only run once per day
+
+    query_start_date = start_date + datetime.timedelta(days=0)
+    while query_start_date <= end_date:
+        query_end_date = min(
+            # must do single-day increment b/c endpoint doesn't return date
+            query_start_date + datetime.timedelta(days=0),
+            end_date
+        )
+        params = {
+            'dates' : '%s/%s' % (query_start_date.strftime(SLING_DATE_FMT), 
+                                 query_end_date.strftime(SLING_DATE_FMT))
+        }
+        raw_leaves = sc.make_request('reports/leave', params=params)
+        LOGGER.info('query_start_date: %s, query_end_date: %s' % (query_start_date, query_end_date))
+
+        leave_records = []
+        for user_id, user_leave in raw_leaves.items():
+            for leave_type_id, leave_detail in user_leave.items():
+                record = {
+                    "date": query_start_date.strftime(DATETIME_PARSE),
+                    "user_id": id_2_str(user_id),
+                    "leave_type_id": id_2_str(leave_type_id),
+                    "approved": leave_detail.get("approved"),
+                    "approved_minutes": leave_detail.get("approvedMinutes"),
+                    "pending": leave_detail.get("pending"),
+                    "pending_minutes": leave_detail.get("pendingMinutes"),
+                    "unpaid": leave_detail.get("unpaid"),
+                    "unpaid_minutes": leave_detail.get("unpaidMinutes"),
+                }
+                leave_records.append(record)
+
+        singer.write_records(stream_id, leave_records)
+
+        query_start_date = query_end_date + datetime.timedelta(days=1)
+        time.sleep(1)  # avoid 70 rpm rate limit
+
+    state['bookmarks'][stream_id] = (
+        {} 
+        if not state['bookmarks'].get(stream_id)
+        else state['bookmarks'][stream_id]
+    )
+    state['bookmarks'][stream_id]['start_date'] = (
+        end_date + datetime.timedelta(days=1)  # today
+    ).strftime(DATETIME_PARSE)
+    singer.write_state(state)
+    
+    return state
 
 
 def sync_no_shows(config, state):
