@@ -66,7 +66,33 @@ def sync_shifts(config, state):
 
 
 def sync_users(config, state):
-    return
+    stream_id = 'users'
+    api_key = config['api_key']
+    sc = SlingClient(api_key)
+    
+    raw_users = sc.make_request('users', state=state)
+    if not raw_users:
+        raise Exception("Resource not found")
+    
+    user_records = []
+    for user in raw_users:
+        record = {
+            'id': str(user.get('id')) if user.get('id') else None,
+            'type': user.get('type'),
+            'name': user.get('name'),
+            'last_name': user.get('lastname'),
+            'avatar': user.get('avatar'),
+            'email': user.get('email'),
+            'timezone': user.get('timezone'),
+            'hours_cap': user.get('hoursCap'),
+            'active': user.get('active'),
+            'deactivated_at': user.get('deactivatedAt'),
+        }
+        user_records.append(record)
+
+    singer.write_records(stream_id, user_records)
+
+    return state
 
 
 SYNC_FUNCTIONS = {
