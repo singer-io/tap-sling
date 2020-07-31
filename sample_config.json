@@ -1,3 +1,5 @@
 {
-  "api_key": "abcdefg"
+  "api_key": "ABC123",
+  "start_date": "2015-01-01T00:00:00Z",
+  "user_agent" : "Stitch (+support@stitchdata.com)"
 }
