@@ -49,6 +49,12 @@ class SlingClient:
         return resp
 
 
+def id_2_str(id):
+    if id:
+        return str(id)
+    return id
+            
+
 def sync_leave_types(config, state):
     stream_id = 'leave_types'
     api_key = config['api_key']
@@ -61,7 +67,7 @@ def sync_leave_types(config, state):
     leave_type_records = []
     for leave_type in raw_leave_types:
         record = {
-            'id': str(leave_type.get('id')) if leave_type.get('id') else None,
+            'id': id_2_str(leave_type.get('id')),
             'type': leave_type.get('type'),
             'name': leave_type.get('name'),
             'paid': leave_type.get('paid'),
