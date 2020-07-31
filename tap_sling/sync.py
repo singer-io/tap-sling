@@ -162,7 +162,67 @@ def sync_leaves(config, state):
 
 
 def sync_no_shows(config, state):
-    return
+    stream_id = 'no_shows'
+    api_key = config['api_key']
+    sc = SlingClient(api_key)
+
+    start_date = strptime(
+        state['bookmarks'].get(stream_id, {}).get('start_date', config['start_date'])
+    ).date()
+    end_date = (  # yesterday
+        datetime.datetime.utcnow() - datetime.timedelta(days=1)
+    ).date()
+    if start_date > end_date:
+        LOGGER.info('Start date %s after yesterday; will try again later.' % start_date)
+        return state  # only run once per day
+
+    query_start_date = start_date + datetime.timedelta(days=0)
+    while query_start_date <= end_date:
+        query_end_date = min(
+            # must do single-day increment b/c endpoint doesn't return date
+            query_start_date + datetime.timedelta(days=0),
+            end_date
+        )
+        params = {
+            'dates' : '%s/%s' % (query_start_date.strftime(SLING_DATE_FMT), 
+                                 query_end_date.strftime(SLING_DATE_FMT))
+        }
+        raw_no_shows = sc.make_request('reports/noshows', params=params)
+        LOGGER.info('query_start_date: %s, query_end_date: %s' % (query_start_date, query_end_date))
+
+        no_show_records = []
+        for idx, details in raw_no_shows.items():
+            idx_split = idx.split('/')
+            
+            record = {
+                "date": query_start_date.strftime(DATETIME_PARSE),
+                "user_id": idx_split[0],
+                "location_id": idx_split[1],
+                "position_id": idx_split[2],
+                "actual": safe_cast(details.get("actual"), int),
+                "actual_minutes": safe_cast(details.get("actualMinutes"), int),
+                "no_show": safe_cast(details.get("noShow"), int),
+                "scheduled": safe_cast(details.get("scheduled"), int),
+                "scheduled_minutes": safe_cast(details.get("scheduledMinutes"), int),
+            }
+            no_show_records.append(record)
+
+        singer.write_records(stream_id, no_show_records)
+
+        query_start_date = query_end_date + datetime.timedelta(days=1)
+        time.sleep(1)  # avoid 70 rpm rate limit
+
+    state['bookmarks'][stream_id] = (
+        {} 
+        if not state['bookmarks'].get(stream_id)
+        else state['bookmarks'][stream_id]
+    )
+    state['bookmarks'][stream_id]['start_date'] = (
+        end_date + datetime.timedelta(days=1)  # today
+    ).strftime(DATETIME_PARSE)
+    singer.write_state(state)
+    
+    return state
 
 
 def sync_shifts(config, state):
