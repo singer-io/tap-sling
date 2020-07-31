@@ -40,13 +40,17 @@ class SlingClient:
             'Authorization': self.api_key
         }
         url = 'https://api.sling.is/v1/%s%s' % (endpoint, querystring)
-        LOGGER.info('URL=%s', endpoint)
+        LOGGER.info('URL=%s', url)
         resp = requests.request(method, url, headers=headers, **request_kwargs)
         
-        if resp.status_code == 200:
-            return resp.json()
+        if not resp.status_code == 200:
+            raise Exception(
+                "Request returned status code %d\nResponse text: %s" 
+                % (resp.status_code, resp.text)
+            )
 
-        return resp
+        return resp.json()
+
 
 
 def id_2_str(id):
@@ -61,8 +65,6 @@ def sync_leave_types(config, state):
     sc = SlingClient(api_key)
     
     raw_leave_types = sc.make_request('leave/types', state=state)
-    if not raw_leave_types:
-        raise Exception("Resource not found")
     
     leave_type_records = []
     for leave_type in raw_leave_types:
@@ -100,8 +102,6 @@ def sync_users(config, state):
     sc = SlingClient(api_key)
     
     raw_users = sc.make_request('users', state=state)
-    if not raw_users:
-        raise Exception("Resource not found")
     
     user_records = []
     for user in raw_users:
