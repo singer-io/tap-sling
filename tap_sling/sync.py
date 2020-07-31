@@ -40,7 +40,7 @@ class SlingClient:
     def __init__(self, api_key):
         self.api_key = api_key
 
-    def make_request(self, endpoint, querystring='', method='GET', state=None, **request_kwargs):
+    def make_request(self, endpoint, querystring='', method='GET', **request_kwargs):
         headers = {
             'Authorization': self.api_key
         }
@@ -78,7 +78,7 @@ def sync_leave_types(config, state):
     api_key = config['api_key']
     sc = SlingClient(api_key)
     
-    raw_leave_types = sc.make_request('leave/types', state=state)
+    raw_leave_types = sc.make_request('leave/types')
     
     leave_type_records = []
     for leave_type in raw_leave_types:
@@ -132,8 +132,8 @@ def sync_shifts(config, state):
             'dates' : '%s/%s' % (query_start_date.strftime(SLING_DATE_FMT), 
                                  query_end_date.strftime(SLING_DATE_FMT))
         }
-        raw_timesheets = sc.make_request('reports/timesheets', state=state, params=params)
-        raw_labor_costs = sc.make_request('labor/cost', state=state, params=params)
+        raw_timesheets = sc.make_request('reports/timesheets', params=params)
+        raw_labor_costs = sc.make_request('labor/cost', params=params)
         LOGGER.info('query_start_date: %s, query_end_date: %s' % (query_start_date, query_end_date))
 
         shift_costs = {
@@ -200,7 +200,7 @@ def sync_users(config, state):
     api_key = config['api_key']
     sc = SlingClient(api_key)
     
-    raw_users = sc.make_request('users', state=state)
+    raw_users = sc.make_request('users')
     
     user_records = []
     for user in raw_users:
