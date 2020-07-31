@@ -1,0 +1,27 @@
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+			"id": {
+				"type": "string"
+			},
+			"type": {
+				"type": ["null", "string"]
+			},
+			"name": {
+				"type": ["null", "string"]
+			},
+			"paid": {
+				"type": ["null", "boolean"]
+			},
+			"enabled": {
+				"type": ["null", "boolean"]
+			},
+			"cap": {
+				"type": ["null", "integer"]
+			},
+			"available": {
+				"type": ["null", "boolean"]
+			}
+		}
+}

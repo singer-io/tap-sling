@@ -1,0 +1,95 @@
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+			"id": {
+				"type": "string"
+			},
+			"summary": {
+				"type": ["null", "string"]
+			},
+			"status": {
+				"type": ["null", "string"]
+			},
+			"type": {
+				"type": ["null", "string"]
+			},
+			"full_day": {
+				"type": ["null", "boolean"]
+			},
+			"open_end": {
+				"type": ["null", "boolean"]
+			},
+			"start_datetime": {
+				"type": ["null", "string"],
+				"format": "date-time"
+			},
+			"end_datetime": {
+				"type": ["null", "string"],
+				"format": "date-time"
+			},
+			"approved": {
+				"type": ["null", "boolean"]
+			},
+			"assignee_notes": {
+				"type": ["null", "string"]
+			},
+			"user_id": {
+				"type": ["null", "string"]
+			},
+			"location_id": {
+				"type": ["null", "string"]
+			},
+			"position_id": {
+				"type": ["null", "string"]
+			},
+			"break_duration": {
+				"type": ["null", "integer"]
+			},
+			"available": {
+				"type": ["null", "boolean"]
+			},
+			"slots": {
+				"type": ["null", "integer"]
+			},
+			"tags": {
+				"type": ["null", "array"],
+				"items": {
+						"type": "string"
+				}
+			},
+			"event_day": {
+				"type": ["null", "number"]
+			},
+			"paid_minutes": {
+				"type": ["null", "number"]
+			},
+			"regular_minutes": {
+				"type": ["null", "number"]
+			},
+			"regular_cost": {
+				"type": ["null", "number"]
+			},
+			"overtime_minutes": {
+				"type": ["null", "number"]
+			},
+			"overtime_cost": {
+				"type": ["null", "number"]
+			},
+			"holiday_regular_minutes": {
+				"type": ["null", "number"]
+			},
+			"holiday_regular_cost": {
+				"type": ["null", "number"]
+			},
+			"holiday_overtime_minutes": {
+				"type": ["null", "number"]
+			},
+			"holiday_overtime_cost": {
+				"type": ["null", "number"]
+			},
+			"spread_of_hours_cost": {
+				"type": ["null", "number"]
+			}
+		}
+}

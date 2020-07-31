@@ -1,0 +1,37 @@
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+			"id": {
+				"type": "string"
+			},
+			"type": {
+				"type": ["null", "string"]
+			},
+			"name": {
+				"type": ["null", "string"]
+			},
+			"last_name": {
+				"type": ["null", "string"]
+			},
+			"avatar": {
+				"type": ["null", "string"]
+			},
+			"email": {
+				"type": ["null", "string"]
+			},
+			"timezone": {
+				"type": ["null", "string"]
+			},
+			"hours_cap": {
+				"type": ["null", "integer"]
+			},
+			"active": {
+				"type": ["null", "boolean"]
+			},
+			"deactivated_at": {
+				"type": ["null", "string"],
+				"format": "date-time"
+			}
+		}
+}

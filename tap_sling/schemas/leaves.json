@@ -1,0 +1,22 @@
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+			"date": {
+				"type": ["null", "string"],
+				"format": "date-time"
+			},
+			"user_id": {
+				"type": ["null", "string"]
+			},
+			"leave_type_id": {
+				"type": ["null", "string"]
+			},
+			"approved": {
+				"type": ["null", "integer"]
+			},
+			"approved_minutes": {
+				"type": ["null", "integer"]
+			}
+		}
+}
