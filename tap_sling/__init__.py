@@ -24,7 +24,12 @@ def main():
             catalog = args.catalog
         else:
             catalog = discover()
-        sync(args.config, args.state, catalog)
+
+        state = args.state or {
+            'bookmarks': {}
+        }
+
+        sync(args.config, state, catalog)
 
 
 if __name__ == "__main__":

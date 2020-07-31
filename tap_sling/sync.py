@@ -1,7 +1,12 @@
+import datetime
 import requests
 import singer
+import time
 
-
+DATETIME_PARSE = "%Y-%m-%dT%H:%M:%SZ"
+DATETIME_FMT = "%04Y-%m-%dT%H:%M:%S.%fZ"
+DATETIME_FMT_MAC = "%Y-%m-%dT%H:%M:%S.%fZ"
+SLING_DATE_FMT = '%Y-%m-%d'
 LOGGER = singer.get_logger()
 
 
@@ -52,11 +57,20 @@ class SlingClient:
         return resp.json()
 
 
-
 def id_2_str(id):
     if id:
         return str(id)
     return id
+
+
+def strptime(dtime):
+    try:
+        return datetime.datetime.strptime(dtime, DATETIME_FMT)
+    except Exception:
+        try:
+            return datetime.datetime.strptime(dtime, DATETIME_FMT_MAC)
+        except Exception:
+            return datetime.datetime.strptime(dtime, DATETIME_PARSE)
             
 
 def sync_leave_types(config, state):
@@ -93,7 +107,92 @@ def sync_no_shows(config, state):
 
 
 def sync_shifts(config, state):
-    return
+    stream_id = 'shifts'
+    api_key = config['api_key']
+    sc = SlingClient(api_key)
+
+    start_date = strptime(
+        state['bookmarks'].get(stream_id, {}).get('start_date', config['start_date'])
+    ).date()
+    end_date = (  # yesterday
+        datetime.datetime.utcnow() - datetime.timedelta(days=1)
+    ).date()
+    if start_date > end_date:
+        LOGGER.info('Start date %s after yesterday; will try again later.' % start_date)
+        return state  # only run once per day
+
+    # /labor/cost only allows 124 days per query, do 30 at a time to be safe
+    query_start_date = start_date + datetime.timedelta(days=0)
+    while query_start_date <= end_date:
+        query_end_date = min(
+            query_start_date + datetime.timedelta(days=30),
+            end_date
+        )
+        params = {
+            'dates' : '%s/%s' % (query_start_date.strftime(SLING_DATE_FMT), 
+                                 query_end_date.strftime(SLING_DATE_FMT))
+        }
+        raw_timesheets = sc.make_request('reports/timesheets', state=state, params=params)
+        raw_labor_costs = sc.make_request('labor/cost', state=state, params=params)
+        LOGGER.info('query_start_date: %s, query_end_date: %s' % (query_start_date, query_end_date))
+
+        shift_costs = {
+            shift_id: costs 
+            for shift_id, costs 
+            in raw_labor_costs.get('costs', {}).items()
+        }
+
+        shift_records = []
+        for timesheet in raw_timesheets:
+            shift_id = timesheet.get("id")
+            record = {
+                "id": shift_id,
+                "summary": timesheet.get("summary"),
+                "status": timesheet.get("status"),
+                "type": timesheet.get("type"),
+                "full_day": timesheet.get("fullDay"),
+                "open_end": timesheet.get("openEnd"),
+                "start_datetime": timesheet.get("dtstart"),
+                "end_datetime": timesheet.get("dtend"),
+                "approved": timesheet.get("approved"),
+                "assignee_notes": timesheet.get("assigneeNotes"),
+                "user_id": id_2_str(timesheet.get("user", {}).get("id")),
+                "location_id": id_2_str(timesheet.get("location", {}).get("id")),
+                "position_id": id_2_str(timesheet.get("position", {}).get("id")),
+                "break_duration": timesheet.get("breakDuration"),
+                "available": timesheet.get("available"),
+                "slots": timesheet.get("slots"),
+                "tags": timesheet.get("tags"),
+                "event_day": shift_costs.get(shift_id, {}).get("eventDay"),
+                "paid_minutes": shift_costs.get(shift_id, {}).get("paidMinutes"),
+                "regular_minutes": shift_costs.get(shift_id, {}).get("regularMinutes"),
+                "regular_cost": shift_costs.get(shift_id, {}).get("regularCost"),
+                "overtime_minutes": shift_costs.get(shift_id, {}).get("overtimeMinutes"),
+                "overtime_cost": shift_costs.get(shift_id, {}).get("overtimeCost"),
+                "holiday_regular_minutes": shift_costs.get(shift_id, {}).get("holidayRegularMinutes"),
+                "holiday_regular_cost": shift_costs.get(shift_id, {}).get("holidayRegularCost"),
+                "holiday_overtime_minutes": shift_costs.get(shift_id, {}).get("holidayOvertimeMinutes"),
+                "holiday_overtime_cost": shift_costs.get(shift_id, {}).get("holidayOvertimeCost"),
+                "spread_of_hours_cost": shift_costs.get(shift_id, {}).get("spreadOfHoursCost"),
+            }
+            shift_records.append(record)
+
+        singer.write_records(stream_id, shift_records)
+
+        query_start_date = query_end_date + datetime.timedelta(days=1)
+        time.sleep(1)  # avoid 70 rpm rate limit
+    
+    state['bookmarks'][stream_id] = (
+        {} 
+        if not state['bookmarks'].get(stream_id)
+        else state['bookmarks'][stream_id]
+    )
+    state['bookmarks'][stream_id]['start_date'] = (
+        end_date + datetime.timedelta(days=1)  # today
+    ).strftime(DATETIME_PARSE)
+    singer.write_state(state)
+
+    return state
 
 
 def sync_users(config, state):
