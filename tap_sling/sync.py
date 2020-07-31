@@ -50,7 +50,30 @@ class SlingClient:
 
 
 def sync_leave_types(config, state):
-    return
+    stream_id = 'leave_types'
+    api_key = config['api_key']
+    sc = SlingClient(api_key)
+    
+    raw_leave_types = sc.make_request('leave/types', state=state)
+    if not raw_leave_types:
+        raise Exception("Resource not found")
+    
+    leave_type_records = []
+    for leave_type in raw_leave_types:
+        record = {
+            'id': str(leave_type.get('id')) if leave_type.get('id') else None,
+            'type': leave_type.get('type'),
+            'name': leave_type.get('name'),
+            'paid': leave_type.get('paid'),
+            'enabled': leave_type.get('enabled'),
+            'cap': leave_type.get('cap'),
+            'available': leave_type.get('available'),
+        }
+        leave_type_records.append(record)
+
+    singer.write_records(stream_id, leave_type_records)
+
+    return state
 
 
 def sync_leaves(config, state):
