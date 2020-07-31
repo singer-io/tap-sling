@@ -57,10 +57,10 @@ class SlingClient:
         return resp.json()
 
 
-def id_2_str(id):
-    if id:
-        return str(id)
-    return id
+def safe_cast(value, to_type):
+    if value:
+        return to_type(value)
+    return value
 
 
 def strptime(dtime):
@@ -83,7 +83,7 @@ def sync_leave_types(config, state):
     leave_type_records = []
     for leave_type in raw_leave_types:
         record = {
-            'id': id_2_str(leave_type.get('id')),
+            'id': safe_cast(leave_type.get('id'), str),
             'type': leave_type.get('type'),
             'name': leave_type.get('name'),
             'paid': leave_type.get('paid'),
@@ -132,8 +132,8 @@ def sync_leaves(config, state):
             for leave_type_id, leave_detail in user_leave.items():
                 record = {
                     "date": query_start_date.strftime(DATETIME_PARSE),
-                    "user_id": id_2_str(user_id),
-                    "leave_type_id": id_2_str(leave_type_id),
+                    "user_id": safe_cast(user_id, str),
+                    "leave_type_id": safe_cast(leave_type_id, str),
                     "approved": leave_detail.get("approved"),
                     "approved_minutes": leave_detail.get("approvedMinutes"),
                     "pending": leave_detail.get("pending"),
@@ -215,9 +215,9 @@ def sync_shifts(config, state):
                 "end_datetime": timesheet.get("dtend"),
                 "approved": timesheet.get("approved"),
                 "assignee_notes": timesheet.get("assigneeNotes"),
-                "user_id": id_2_str(timesheet.get("user", {}).get("id")),
-                "location_id": id_2_str(timesheet.get("location", {}).get("id")),
-                "position_id": id_2_str(timesheet.get("position", {}).get("id")),
+                "user_id": safe_cast(timesheet.get("user", {}).get("id"), str),
+                "location_id": safe_cast(timesheet.get("location", {}).get("id"), str),
+                "position_id": safe_cast(timesheet.get("position", {}).get("id"), str),
                 "break_duration": timesheet.get("breakDuration"),
                 "available": timesheet.get("available"),
                 "slots": timesheet.get("slots"),
