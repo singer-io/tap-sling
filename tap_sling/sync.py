@@ -1,7 +1,7 @@
 import datetime
+import time
 import requests
 import singer
-import time
 
 DATETIME_PARSE = "%Y-%m-%dT%H:%M:%SZ"
 DATETIME_FMT = "%04Y-%m-%dT%H:%M:%S.%fZ"
@@ -17,7 +17,7 @@ def sync(config, state, catalog):
     # Loop over streams in catalog
     for stream in catalog.get_selected_streams(state):
         stream_id = stream.tap_stream_id
-        LOGGER.info("Syncing stream:" + stream_id)
+        LOGGER.info("Syncing stream: %s", stream_id)
 
         singer.write_schema(
             stream_name=stream_id,
@@ -110,7 +110,7 @@ def sync_leaves(config, state):
         datetime.datetime.utcnow() - datetime.timedelta(days=1)
     ).date()
     if start_date > end_date:
-        LOGGER.info('Start date %s after yesterday; will try again later.' % start_date)
+        LOGGER.info('Start date %s after yesterday; will try again later.', start_date)
         return state  # only run once per day
 
     query_start_date = start_date + datetime.timedelta(days=0)
@@ -125,7 +125,7 @@ def sync_leaves(config, state):
                                  query_end_date.strftime(SLING_DATE_FMT))
         }
         raw_leaves = sc.make_request('reports/leave', params=params)
-        LOGGER.info('query_start_date: %s, query_end_date: %s' % (query_start_date, query_end_date))
+        LOGGER.info('query_start_date: %s, query_end_date: %s', query_start_date, query_end_date)
 
         leave_records = []
         for user_id, user_leave in raw_leaves.items():
@@ -173,7 +173,7 @@ def sync_no_shows(config, state):
         datetime.datetime.utcnow() - datetime.timedelta(days=1)
     ).date()
     if start_date > end_date:
-        LOGGER.info('Start date %s after yesterday; will try again later.' % start_date)
+        LOGGER.info('Start date %s after yesterday; will try again later.', start_date)
         return state  # only run once per day
 
     query_start_date = start_date + datetime.timedelta(days=0)
@@ -188,7 +188,7 @@ def sync_no_shows(config, state):
                                  query_end_date.strftime(SLING_DATE_FMT))
         }
         raw_no_shows = sc.make_request('reports/noshows', params=params)
-        LOGGER.info('query_start_date: %s, query_end_date: %s' % (query_start_date, query_end_date))
+        LOGGER.info('query_start_date: %s, query_end_date: %s', query_start_date, query_end_date)
 
         no_show_records = []
         for idx, details in raw_no_shows.items():
@@ -237,7 +237,7 @@ def sync_shifts(config, state):
         datetime.datetime.utcnow() - datetime.timedelta(days=1)
     ).date()
     if start_date > end_date:
-        LOGGER.info('Start date %s after yesterday; will try again later.' % start_date)
+        LOGGER.info('Start date %s after yesterday; will try again later.', start_date)
         return state  # only run once per day
 
     # /labor/cost only allows 124 days per query, do 30 at a time to be safe
@@ -253,7 +253,7 @@ def sync_shifts(config, state):
         }
         raw_timesheets = sc.make_request('reports/timesheets', params=params)
         raw_labor_costs = sc.make_request('labor/cost', params=params)
-        LOGGER.info('query_start_date: %s, query_end_date: %s' % (query_start_date, query_end_date))
+        LOGGER.info('query_start_date: %s, query_end_date: %s', query_start_date, query_end_date)
 
         shift_costs = {
             shift_id: costs 
