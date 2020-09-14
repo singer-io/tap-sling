@@ -47,10 +47,10 @@ class SlingClient:
         url = 'https://api.sling.is/v1/%s%s' % (endpoint, querystring)
         LOGGER.info('URL=%s', url)
         resp = requests.request(method, url, headers=headers, **request_kwargs)
-        
+
         if not resp.status_code == 200:
             raise Exception(
-                "Request returned status code %d\nResponse text: %s" 
+                "Request returned status code %d\nResponse text: %s"
                 % (resp.status_code, resp.text)
             )
 
@@ -71,15 +71,15 @@ def strptime(dtime):
             return datetime.datetime.strptime(dtime, DATETIME_FMT_MAC)
         except Exception:
             return datetime.datetime.strptime(dtime, DATETIME_PARSE)
-            
+
 
 def sync_leave_types(config, state):
     stream_id = 'leave_types'
     api_key = config['api_key']
     sc = SlingClient(api_key)
-    
+
     raw_leave_types = sc.make_request('leave/types')
-    
+
     leave_type_records = []
     for leave_type in raw_leave_types:
         record = {
@@ -121,7 +121,7 @@ def sync_leaves(config, state):
             end_date
         )
         params = {
-            'dates' : '%s/%s' % (query_start_date.strftime(SLING_DATE_FMT), 
+            'dates' : '%s/%s' % (query_start_date.strftime(SLING_DATE_FMT),
                                  query_end_date.strftime(SLING_DATE_FMT))
         }
         raw_leaves = sc.make_request('reports/leave', params=params)
@@ -149,7 +149,7 @@ def sync_leaves(config, state):
         time.sleep(1)  # avoid 70 rpm rate limit
 
     state['bookmarks'][stream_id] = (
-        {} 
+        {}
         if not state['bookmarks'].get(stream_id)
         else state['bookmarks'][stream_id]
     )
@@ -157,7 +157,7 @@ def sync_leaves(config, state):
         end_date + datetime.timedelta(days=1)  # today
     ).strftime(DATETIME_PARSE)
     singer.write_state(state)
-    
+
     return state
 
 
@@ -184,7 +184,7 @@ def sync_no_shows(config, state):
             end_date
         )
         params = {
-            'dates' : '%s/%s' % (query_start_date.strftime(SLING_DATE_FMT), 
+            'dates' : '%s/%s' % (query_start_date.strftime(SLING_DATE_FMT),
                                  query_end_date.strftime(SLING_DATE_FMT))
         }
         raw_no_shows = sc.make_request('reports/noshows', params=params)
@@ -193,7 +193,7 @@ def sync_no_shows(config, state):
         no_show_records = []
         for idx, details in raw_no_shows.items():
             idx_split = idx.split('/')
-            
+
             record = {
                 "date": query_start_date.strftime(DATETIME_PARSE),
                 "user_id": idx_split[0],
@@ -213,7 +213,7 @@ def sync_no_shows(config, state):
         time.sleep(1)  # avoid 70 rpm rate limit
 
     state['bookmarks'][stream_id] = (
-        {} 
+        {}
         if not state['bookmarks'].get(stream_id)
         else state['bookmarks'][stream_id]
     )
@@ -221,7 +221,7 @@ def sync_no_shows(config, state):
         end_date + datetime.timedelta(days=1)  # today
     ).strftime(DATETIME_PARSE)
     singer.write_state(state)
-    
+
     return state
 
 
@@ -248,7 +248,7 @@ def sync_shifts(config, state):
             end_date
         )
         params = {
-            'dates' : '%s/%s' % (query_start_date.strftime(SLING_DATE_FMT), 
+            'dates' : '%s/%s' % (query_start_date.strftime(SLING_DATE_FMT),
                                  query_end_date.strftime(SLING_DATE_FMT))
         }
         raw_timesheets = sc.make_request('reports/timesheets', params=params)
@@ -256,8 +256,8 @@ def sync_shifts(config, state):
         LOGGER.info('query_start_date: %s, query_end_date: %s', query_start_date, query_end_date)
 
         shift_costs = {
-            shift_id: costs 
-            for shift_id, costs 
+            shift_id: costs
+            for shift_id, costs
             in raw_labor_costs.get('costs', {}).items()
         }
 
@@ -300,9 +300,9 @@ def sync_shifts(config, state):
 
         query_start_date = query_end_date + datetime.timedelta(days=1)
         time.sleep(1)  # avoid 70 rpm rate limit
-    
+
     state['bookmarks'][stream_id] = (
-        {} 
+        {}
         if not state['bookmarks'].get(stream_id)
         else state['bookmarks'][stream_id]
     )
@@ -318,9 +318,9 @@ def sync_users(config, state):
     stream_id = 'users'
     api_key = config['api_key']
     sc = SlingClient(api_key)
-    
+
     raw_users = sc.make_request('users')
-    
+
     user_records = []
     for user in raw_users:
         record = {
