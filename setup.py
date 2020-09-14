@@ -13,6 +13,12 @@ setup(
         "singer-python==5.9.0",
         "requests==2.24.0",
     ],
+    extras_require={
+        'dev': [
+            'pylint==2.5.3',
+            'ipdb',
+        ]
+    },
     entry_points="""
     [console_scripts]
     tap-sling=tap_sling:main
