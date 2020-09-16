@@ -55,7 +55,13 @@
 			"tags": {
 				"type": ["null", "array"],
 				"items": {
-						"type": "string"
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"id": {
+							"type": "string"
+						}
+					}
 				}
 			},
 			"event_day": {

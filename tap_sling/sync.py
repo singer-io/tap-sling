@@ -281,7 +281,7 @@ def sync_shifts(config, state):
                 "break_duration": timesheet.get("breakDuration"),
                 "available": timesheet.get("available"),
                 "slots": timesheet.get("slots"),
-                "tags": timesheet.get("tags"),
+                "tags": [{"id": safe_cast(t.get("id"), str)} for t in timesheet.get("tags")],
                 "event_day": shift_costs.get(shift_id, {}).get("eventDay"),
                 "paid_minutes": shift_costs.get(shift_id, {}).get("paidMinutes"),
                 "regular_minutes": shift_costs.get(shift_id, {}).get("regularMinutes"),
